@@ -1,0 +1,46 @@
+/**
+ * @file DTPController.cpp DTPController DAQModule implementation
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+#include "flxlibs/felixcardcontroller/Nljs.hpp"
+#include "flxlibs/felixcardcontrollerinfo/InfoNljs.hpp"
+
+#include "DTPController.hpp"
+#include "FelixIssues.hpp"
+
+#include "logging/Logging.hpp"
+
+#include <nlohmann/json.hpp>
+
+#include <bitset>
+#include <iomanip>
+#include <memory>
+#include <string>
+#include <vector>
+
+/**
+ * @brief Name used by TRACE TLOG calls from this source file
+ */
+#define TRACE_NAME "DTPController" // NOLINT
+
+/**
+ * @brief TRACE debug levels used in this source file
+ */
+enum
+  {
+    TLVL_ENTER_EXIT_METHODS = 5,
+    TLVL_WORK_STEPS = 10,
+    TLVL_BOOKKEEPING = 15
+  };
+
+namespace dunedaq {
+  namespace dtplibs {
+
+    
+
+
+  }
+}
