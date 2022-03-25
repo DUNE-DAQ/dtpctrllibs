@@ -5,19 +5,29 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
+
+// dtpctrllibs headers
 #include "DTPController.hpp"
 
+#include "dtpctrllibs/dtpcontroller/Nljs.hpp"
+#include "dtpctrllibs/dtpcontroller/Structs.hpp"
+
+#include "dtpctrllibs/DTPIssues.hpp"
+
+// dtpcontrols headers
 #include "dtpcontrols/toolbox.hpp"
 
 #include "uhal/uhal.hpp"
 
 #include "logging/Logging.hpp"
 
-#include <nlohmann/json.hpp>
+// appfwk headers
+#include "appfwk/DAQModuleHelper.hpp"
+#include "appfwk/cmd/Nljs.hpp"
 
-#include <bitset>
-#include <iomanip>
-#include <memory>
+#include "ers/Issue.hpp"
+#include "logging/Logging.hpp"
+
 #include <string>
 #include <vector>
 
@@ -28,7 +38,9 @@ namespace dunedaq {
       : DAQModule(name)
     {
       register_command("conf", &DTPController::do_configure);
-      register_command("reset", &DTPController::do_reset);
+      register_command("start", &DTPController::do_start);
+      register_command("stop", &DTPController::do_stop);
+      //  register_command("reset", &DTPController::do_reset);
     }
 
     void
@@ -47,7 +59,17 @@ namespace dunedaq {
       // then apply TP parameters
 
     }
-    
+
+    void
+    DTPController::do_start(const data_t& args) {
+
+    }
+
+    void
+    DTPController::do_stop(const data_t& args) {
+
+    }
+
 
     void                                                                  
     DTPController::do_reset(const data_t& args)
@@ -56,14 +78,15 @@ namespace dunedaq {
     }
 
 
-    //    void
-    //    DTPController::get_info(opmonlib::InfoCollector& ci, int /*level*/)
-    //    {
-    //      dtpcontrollerinfo::ChannelInfo info;  
-    //    }
+    void
+    DTPController::get_info(opmonlib::InfoCollector& ci, int /*level*/)
+    {
+      return;
+    }
     
     
   }
 }
 
 DEFINE_DUNE_DAQ_MODULE(dunedaq::dtpctrllibs::DTPController)
+

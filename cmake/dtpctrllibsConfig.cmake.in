@@ -9,8 +9,9 @@ include(CMakeFindDependencyMacro)
 find_dependency(ers)
 find_dependency(appfwk)
 find_dependency(logging)
-find_dependency(dtpcontrols)
 find_dependency(opmonlib)
+find_dependency(uhallibs)
+find_dependency(dtpcontrols)
 
 # Figure out whether or not this dependency is an installed package or
 # in repo form

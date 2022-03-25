@@ -17,10 +17,18 @@
 #include "dtpcontrols/DTPPodNode.hpp"
 
 // appfwk
-#include "appfwk/app/Nljs.hpp"
-#include "appfwk/cmd/Nljs.hpp"
-#include "appfwk/cmd/Structs.hpp"
 #include "appfwk/DAQModule.hpp"
+#include "appfwk/DAQSink.hpp"
+#include "appfwk/DAQSource.hpp"
+#include "utilities/WorkerThread.hpp"
+
+#include "rcif/cmd/Nljs.hpp"
+#include "rcif/cmd/Structs.hpp"
+
+#include "ers/Issue.hpp"
+#include "logging/Logging.hpp"
+
+#include "opmonlib/InfoCollector.hpp"
 
 #include <memory>
 #include <string>
@@ -46,10 +54,12 @@ namespace dunedaq {
 
       // Commands
       void do_configure(const data_t& args);
+      void do_start(const data_t& args);
+      void do_stop(const data_t& args);
 
       void do_reset(const data_t& args);
 
-      //      void get_info(opmonlib::InfoCollector& ci, int level);
+      void get_info(opmonlib::InfoCollector& ci, int level) override;
 
       const dtpcontrols::DTPPodNode* m_dtp_pod;
 

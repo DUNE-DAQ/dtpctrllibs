@@ -10,6 +10,7 @@ find_package(ers REQUIRED)
 find_package(logging REQUIRED)
 find_package(opmonlib REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(uhallibs REQUIRED)
 find_package(dtpcontrols REQUIRED)
 
 daq_codegen( dtpcontroller.jsonnet
@@ -21,6 +22,7 @@ set(DTPLIBS_DEPENDENCIES
   	logging::logging
   	opmonlib::opmonlib
   	nlohmann_json::nlohmann_json
+	uhallibs::uhallibs
   	dtpcontrols::dtpcontrols
 )
 
