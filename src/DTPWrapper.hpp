@@ -17,7 +17,7 @@
 #include <mutex>
 #include <string>
 
-namespace dunedaq::dtplibs {
+namespace dunedaq::dtpctrllibs {
 
 class DTPWrapper
 {

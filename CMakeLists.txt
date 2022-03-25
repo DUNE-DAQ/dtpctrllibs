@@ -10,27 +10,32 @@ find_package(ers REQUIRED)
 find_package(logging REQUIRED)
 find_package(opmonlib REQUIRED)
 find_package(nlohmann_json REQUIRED)
-find_package(uhallibs REQUIRED)
+find_package(uhal REQUIRED)
+
 find_package(dtpcontrols REQUIRED)
 
 daq_codegen( dtpcontroller.jsonnet
 	     DEP_PKGS appfwk rcif cmdlib networkmanager TEMPLATES Structs.hpp.j2 Nljs.hpp.j2)
 
-set(DTPLIBS_DEPENDENCIES
+daq_codegen( dtpcontrollerinfo.jsonnet
+	     DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
+
+set(DTPCTRLLIBS_DEPENDENCIES
 	appfwk::appfwk
 	ers::ers
   	logging::logging
   	opmonlib::opmonlib
   	nlohmann_json::nlohmann_json
+	uhal::uhal
 	uhallibs::uhallibs
   	dtpcontrols::dtpcontrols
 )
 
 ##############################################################################
-daq_add_library(DTPWrapper.cpp LINK_LIBRARIES ${DTPLIBS_DEPENDENCIES})
+daq_add_library(DTPWrapper.cpp LINK_LIBRARIES ${DTPCTRLLIBS_DEPENDENCIES})
 
 # plugins
-daq_add_plugin(DTPController duneDAQModule LINK_LIBRARIES ${DTPLIBS_DEPENDENCIES})
+daq_add_plugin(DTPController duneDAQModule LINK_LIBRARIES ${DTPCTRLLIBS_DEPENDENCIES})
 
 ###############################################################################
 #daq_add_python_bindings(toy_wrapper.cpp LINK_LIBRARIES ${PROJECT_NAME})

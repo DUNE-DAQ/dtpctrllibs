@@ -10,6 +10,7 @@ find_dependency(ers)
 find_dependency(appfwk)
 find_dependency(logging)
 find_dependency(opmonlib)
+find_dependency(uhal)
 find_dependency(uhallibs)
 find_dependency(dtpcontrols)
 

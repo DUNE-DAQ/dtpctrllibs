@@ -12,6 +12,9 @@
 #include "dtpctrllibs/dtpcontroller/Nljs.hpp"
 #include "dtpctrllibs/dtpcontroller/Structs.hpp"
 
+#include "dtpctrllibs/dtpcontrollerinfo/InfoNljs.hpp"
+#include "dtpctrllibs/dtpcontrollerinfo/InfoStructs.hpp"
+
 #include "dtpctrllibs/DTPIssues.hpp"
 
 // dtpcontrols headers
@@ -40,7 +43,15 @@ namespace dunedaq {
       register_command("conf", &DTPController::do_configure);
       register_command("start", &DTPController::do_start);
       register_command("stop", &DTPController::do_stop);
-      //  register_command("reset", &DTPController::do_reset);
+      register_command("reset", &DTPController::do_reset);
+    }
+
+    DTPController::~DTPController() {
+      delete m_dtp_pod;
+    }
+
+    void DTPController::init(const data_t& init_data) {
+
     }
 
     void
@@ -62,18 +73,19 @@ namespace dunedaq {
 
     void
     DTPController::do_start(const data_t& args) {
-
+      const data_t args2 = args;
     }
 
     void
     DTPController::do_stop(const data_t& args) {
-
+      const data_t args2 = args;
     }
 
 
     void                                                                  
     DTPController::do_reset(const data_t& args)
     {  
+      const data_t args2 = args;
       m_dtp_pod->reset();
     }
 
@@ -81,12 +93,13 @@ namespace dunedaq {
     void
     DTPController::get_info(opmonlib::InfoCollector& ci, int /*level*/)
     {
-      return;
+      dtpcontrollerinfo::Info module_info;
+      module_info.dummy = 4;
+      ci.add(module_info);
     }
     
     
-  }
-}
+  } // namespace dtpctrllibs
+} // namespace dunedaq
 
 DEFINE_DUNE_DAQ_MODULE(dunedaq::dtpctrllibs::DTPController)
-

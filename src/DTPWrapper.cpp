@@ -21,9 +21,13 @@
 #include <memory>
 #include <string>
 
-namespace dunedaq::dtplibs {
+namespace dunedaq::dtpctrllibs {
 
   DTPWrapper::DTPWrapper() { }
+
+  DTPWrapper::~DTPWrapper() { 
+    delete m_dtp_pod_node;
+  }
 
   void
   DTPWrapper::init(const data_t& args) {

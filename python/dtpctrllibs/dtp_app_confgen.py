@@ -86,24 +86,15 @@ def generate(
     jstr = json.dumps(stopcmd.pod(), indent=4, sort_keys=True)
     print("="*80+"\nStop\n\n", jstr)
 
-    scrapcmd = mcmd("scrap", [
-            ("", None)
+    resetcmd = mrccmd("reset", "CONFIGURED", "CONFIGURED", [
+            ("dtpctrl", None),
         ])
 
-    jstr = json.dumps(scrapcmd.pod(), indent=4, sort_keys=True)
-    print("="*80+"\nScrap\n\n", jstr)
+    jstr = json.dumps(resetcmd.pod(), indent=4, sort_keys=True)
+    print("="*80+"\nStop\n\n", jstr)
 
     # Create a list of commands
-    cmd_seq = [initcmd, confcmd, startcmd, stopcmd]
-
-    # add some commands
-#    dtp_reset_cmd = mrccmd("dtpreset", "RUNNING", "RUNNING", [
-#        ("flxcardctrl_.*", flxcc.GTHResetParams(
-#            quads=0
-#        ))
-#    ])
-
-#    cmd_seq.append(reset_cmd)
+    cmd_seq = [initcmd, confcmd, startcmd, stopcmd, resetcmd]
 
     # Print them as json (to be improved/moved out)
     jstr = json.dumps([c.pod() for c in cmd_seq], indent=4, sort_keys=True)

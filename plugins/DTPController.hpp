@@ -40,6 +40,7 @@ namespace dunedaq {
     {
     public:
       explicit DTPController(const std::string& name);
+      ~DTPController();
 
       DTPController(const DTPController&) = delete; ///< DTPController is not copy-constructible
       DTPController& operator=(const DTPController&) = delete; ///< DTPController is not copy-assignable
@@ -62,6 +63,9 @@ namespace dunedaq {
       void get_info(opmonlib::InfoCollector& ci, int level) override;
 
       const dtpcontrols::DTPPodNode* m_dtp_pod;
+
+      //      std::string m_queue; // dummy queue
+      //      std::unique_ptr<sink_t> m_queue;
 
     };
 

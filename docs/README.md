@@ -16,3 +16,5 @@ daq_application --name dtp_app --commandFacility rest://localhost:12345
 python -m dtpctrllibs.dtp_app_confgen dtp_app.json
 send-recv-restcmd.py --interactive --file dtp_app.json
 ```
+
+At the terminal that now appears, run 'init', 'conf' and 'reset' commands.
