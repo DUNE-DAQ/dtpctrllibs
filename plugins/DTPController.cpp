@@ -111,9 +111,9 @@ namespace dunedaq {
       
       m_dtp_pod = std::make_unique<dtpcontrols::DTPPodNode>( m_flx->getNode(std::string("")) );
       
-      // then apply TP parameters
+      // reset and configure
       m_dtp_pod->reset();
-      
+      m_dtp_pod->configure();
       
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 
@@ -124,12 +124,26 @@ namespace dunedaq {
 
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
 
+      if (m_dtp_pod) {
+	m_dtp_pod->enable();
+      }
+      else {
+        throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
+      }
+
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_start() method";
     }
 
     void
     DTPController::do_stop(const data_t& args) {
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
+
+      if (m_dtp_pod) {
+	m_dtp_pod->disable();
+      }
+      else {
+        throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
+      }
 
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_stop() method";
     }
@@ -146,6 +160,7 @@ namespace dunedaq {
       else {
 	throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
       }
+
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_reset() method";
     }
 
