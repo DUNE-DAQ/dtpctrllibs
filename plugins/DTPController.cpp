@@ -15,7 +15,7 @@
 #include "dtpctrllibs/dtpcontrollerinfo/InfoNljs.hpp"
 #include "dtpctrllibs/dtpcontrollerinfo/InfoStructs.hpp"
 
-#include "dtpctrllibs/DTPIssues.hpp"
+//#include "dtpctrllibs/DTPIssues.hpp"
 
 // dtpcontrols headers
 #include "dtpcontrols/toolbox.hpp"
@@ -36,6 +36,8 @@
 #include <string>
 #include <vector>
 #include <regex>
+
+#define TLVL_ENTER_EXIT_METHODS 10
 
 namespace dunedaq {
 
