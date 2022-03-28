@@ -20,7 +20,9 @@
 // dtpcontrols headers
 #include "dtpcontrols/toolbox.hpp"
 
-#include "uhal/uhal.hpp"
+#include "uhal/ConnectionManager.hpp"
+#include "uhal/log/exception.hpp"
+#include "uhal/utilities/files.hpp"
 
 #include "logging/Logging.hpp"
 
@@ -33,10 +35,17 @@
 
 #include <string>
 #include <vector>
+#include <regex>
 
 namespace dunedaq {
-  namespace dtpctrllibs {
 
+  ERS_DECLARE_ISSUE(dtpctrllibs, InvalidUHALLogLevel, "Invalid UHAL log level supplied: " << log_level, ((std::string)log_level))
+  ERS_DECLARE_ISSUE(dtpctrllibs, UHALConnectionsFileIssue, "Connection file not found : " << filename, ((std::string)filename))
+  ERS_DECLARE_ISSUE(dtpctrllibs, UHALDeviceNameIssue, "Device name not found : " << devicename, ((std::string)devicename))
+  ERS_DECLARE_ISSUE(dtpctrllibs, ModuleNotConfigured, "Cannot complete operation since " << name << "is not configured", ((std::string)name) )
+  
+  namespace dtpctrllibs {
+    
     DTPController::DTPController(const std::string& name)
       : DAQModule(name)
     {
@@ -45,48 +54,98 @@ namespace dunedaq {
       register_command("stop", &DTPController::do_stop);
       register_command("reset", &DTPController::do_reset);
     }
-
+    
     DTPController::~DTPController() {
-      delete m_dtp_pod;
+      //      delete m_dtp_pod;
     }
-
+    
     void DTPController::init(const data_t& init_data) {
-
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
     }
-
+    
     void
     DTPController::do_configure(const data_t& args)
     {
-      m_dtp_configuration = args.get<dtpcontroller::ConfParams>();
-
-      // get the hardware device
-      std::string conn_file = dtpcontrols::find_connection_file();
-
-      uhal::ConnectionManager cm(conn_file, {"ipbusflx-2.0"});
-      uhal::HwInterface flx = cm.getDevice(m_dtp_configuration.device);
-
-      m_dtp_pod = dynamic_cast<const dtpcontrols::DTPPodNode*>( &flx.getNode(std::string("")) );
-
+      
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_configure() method";
+      
+      m_dtp_cfg = args.get<dtpcontroller::ConfParams>();
+      
+      // set UHAL log level
+      if (m_dtp_cfg.uhal_log_level.compare("debug") == 0) {
+	uhal::setLogLevelTo(uhal::Debug());
+      } else if (m_dtp_cfg.uhal_log_level.compare("info") == 0) {
+	uhal::setLogLevelTo(uhal::Info());
+      } else if (m_dtp_cfg.uhal_log_level.compare("notice") == 0) {
+	uhal::setLogLevelTo(uhal::Notice());
+      } else if (m_dtp_cfg.uhal_log_level.compare("warning") == 0) {
+	uhal::setLogLevelTo(uhal::Warning());
+      } else if (m_dtp_cfg.uhal_log_level.compare("error") == 0) {
+	uhal::setLogLevelTo(uhal::Error());
+      } else if (m_dtp_cfg.uhal_log_level.compare("fatal") == 0) {
+	uhal::setLogLevelTo(uhal::Fatal());
+      } else {
+	throw InvalidUHALLogLevel(ERS_HERE, m_dtp_cfg.uhal_log_level);
+      }
+      
+      // get the connections
+      std::vector<std::string> pcols = {"ipbusflx-2.0"};
+      std::string conn_file("file://");
+      conn_file+=m_dtp_cfg.connections_file;
+      resolve_environment_variables(conn_file);
+      try {
+	m_cm = std::make_unique<uhal::ConnectionManager>(conn_file, pcols);
+      } catch (const uhal::exception::FileNotFound& excpt) {
+	throw UHALConnectionsFileIssue(ERS_HERE, conn_file, excpt);
+      }
+      
+      // get the device
+      try {
+	m_flx = std::make_unique<uhal::HwInterface>( m_cm->getDevice(m_dtp_cfg.device) );
+      } catch (const uhal::exception::ConnectionUIDDoesNotExist& except) {
+	throw UHALDeviceNameIssue(ERS_HERE, m_dtp_cfg.device, except);
+      }
+      
+      m_dtp_pod = std::make_unique<dtpcontrols::DTPPodNode>( m_flx->getNode(std::string("")) );
+      
       // then apply TP parameters
+      m_dtp_pod->reset();
+      
+      
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 
     }
-
+    
     void
     DTPController::do_start(const data_t& args) {
+
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
       const data_t args2 = args;
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_start() method";
     }
 
     void
     DTPController::do_stop(const data_t& args) {
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
       const data_t args2 = args;
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_stop() method";
     }
 
 
     void                                                                  
     DTPController::do_reset(const data_t& args)
-    {  
+    {
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_reset() method";
       const data_t args2 = args;
-      m_dtp_pod->reset();
+
+      if (m_dtp_pod) {
+	m_dtp_pod->reset();
+      }
+      else {
+	throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
+      }
+      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_reset() method";
     }
 
 
@@ -98,6 +157,18 @@ namespace dunedaq {
       ci.add(module_info);
     }
     
+    void
+    DTPController::resolve_environment_variables(std::string& input_string)
+    {
+      static std::regex env_var_pattern("\\$\\{([^}]+)\\}");
+      std::smatch match;
+      while (std::regex_search(input_string, match, env_var_pattern)) {
+	const char* s = getenv(match[1].str().c_str());
+	const std::string env_var(s == nullptr ? "" : s);
+	input_string.replace(match[0].first, match[0].second, env_var);
+      }
+    }
+
     
   } // namespace dtpctrllibs
 } // namespace dunedaq

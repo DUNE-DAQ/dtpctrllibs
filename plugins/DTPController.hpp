@@ -16,6 +16,10 @@
 // dtpcontrols
 #include "dtpcontrols/DTPPodNode.hpp"
 
+// uhal
+#include "uhal/ConnectionManager.hpp"
+#include "uhal/log/exception.hpp"
+
 // appfwk
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -51,9 +55,8 @@ namespace dunedaq {
 
     private:
 
-      dtpcontroller::ConfParams m_dtp_configuration;
-
       // Commands
+
       void do_configure(const data_t& args);
       void do_start(const data_t& args);
       void do_stop(const data_t& args);
@@ -62,8 +65,19 @@ namespace dunedaq {
 
       void get_info(opmonlib::InfoCollector& ci, int level) override;
 
-      const dtpcontrols::DTPPodNode* m_dtp_pod;
 
+      // helpers
+      void resolve_environment_variables(std::string& input_string);
+
+      // connections to the hardware
+      std::unique_ptr<uhal::ConnectionManager> m_cm;
+      std::unique_ptr<uhal::HwInterface> m_flx;
+      std::unique_ptr<dtpcontrols::DTPPodNode> m_dtp_pod;
+
+      // config data
+      dtpcontroller::ConfParams m_dtp_cfg;
+
+      
       //      std::string m_queue; // dummy queue
       //      std::unique_ptr<sink_t> m_queue;
 

@@ -27,9 +27,9 @@ import math
 
 def generate(
         RUN_NUMBER = 333, 
-        CONNECTIONS_FILE="${DTPCONTROLS_SHARE}/config/etc/dtp_connections.xml",
+        CONNECTIONS_FILE="${DTPCONTROLS_SHARE}/config/dtp_connections.xml",
         DTP_DEVICE_NAME="flx-0-p2-hf",
-        UHAL_LOG_LEVEL="notice",
+        UHAL_LOG_LEVEL="debug",
         OUTPUT_PATH=".",
     ):
     
@@ -57,7 +57,7 @@ def generate(
     )
 
     mods = [
-                ("dtp", dtpcontroller.ConfParams(
+                ("dtpctrl", dtpcontroller.ConfParams(
                         connections_file=CONNECTIONS_FILE,
                         device=DTP_DEVICE_NAME,
                         uhal_log_level=UHAL_LOG_LEVEL,
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     @click.command(context_settings=CONTEXT_SETTINGS)
 #    @click.option('-p', '--partition', default="hsi_readout_test")
     @click.option('-r', '--run-number', default=333)
-    @click.option('-c', '--connections-file', default="${DTPCONTROLS_SHARE}/config/etc/dtp_connections.xml")
+    @click.option('-c', '--connections-file', default="${DTPCONTROLS_SHARE}/config/dtp_connections.xml")
     @click.option('-d', '--dtp-device-name', default="flx-0-p2-hf")
     @click.option('-u', '--uhal-log-level', default="notice")
     @click.option('-o', '--output-path', type=click.Path(), default='.')

@@ -11,6 +11,7 @@ find_package(logging REQUIRED)
 find_package(opmonlib REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(uhal REQUIRED)
+find_package(pugixml REQUIRED)
 
 find_package(dtpcontrols REQUIRED)
 
@@ -35,7 +36,7 @@ set(DTPCTRLLIBS_DEPENDENCIES
 daq_add_library(DTPWrapper.cpp LINK_LIBRARIES ${DTPCTRLLIBS_DEPENDENCIES})
 
 # plugins
-daq_add_plugin(DTPController duneDAQModule LINK_LIBRARIES ${DTPCTRLLIBS_DEPENDENCIES})
+daq_add_plugin(DTPController duneDAQModule LINK_LIBRARIES dtpcontrols::dtpcontrols dtpctrllibs uhal::uhal pugixml::pugixml)
 
 ###############################################################################
 #daq_add_python_bindings(toy_wrapper.cpp LINK_LIBRARIES ${PROJECT_NAME})
