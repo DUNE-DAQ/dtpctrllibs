@@ -113,7 +113,7 @@ namespace dunedaq {
       
       // reset and configure
       m_dtp_pod->reset();
-      m_dtp_pod->configure();
+      //      m_dtp_pod->configure();
       
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 
@@ -125,7 +125,7 @@ namespace dunedaq {
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
 
       if (m_dtp_pod) {
-	m_dtp_pod->enable();
+	//	m_dtp_pod->enable();
       }
       else {
         throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
@@ -139,7 +139,7 @@ namespace dunedaq {
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
 
       if (m_dtp_pod) {
-	m_dtp_pod->disable();
+	//	m_dtp_pod->disable();
       }
       else {
         throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
