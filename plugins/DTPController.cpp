@@ -56,7 +56,7 @@ namespace dunedaq {
     }
     
     DTPController::~DTPController() {
-      //      delete m_dtp_pod;
+
     }
     
     void DTPController::init(const data_t& init_data) {
@@ -121,14 +121,14 @@ namespace dunedaq {
     DTPController::do_start(const data_t& args) {
 
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
-      const data_t args2 = args;
+
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_start() method";
     }
 
     void
     DTPController::do_stop(const data_t& args) {
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
-      const data_t args2 = args;
+
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_stop() method";
     }
 
@@ -137,7 +137,6 @@ namespace dunedaq {
     DTPController::do_reset(const data_t& args)
     {
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_reset() method";
-      const data_t args2 = args;
 
       if (m_dtp_pod) {
 	m_dtp_pod->reset();
