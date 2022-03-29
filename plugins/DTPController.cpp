@@ -119,7 +119,7 @@ namespace dunedaq {
       std::vector<uint64_t> mask(40, 0);
       uint32_t thresh = 20;
       m_dtp_pod->configure(thresh, mask);
-      
+    
       // verify configuration
 
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
