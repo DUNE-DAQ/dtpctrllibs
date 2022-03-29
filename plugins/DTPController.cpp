@@ -24,8 +24,6 @@
 #include "uhal/log/exception.hpp"
 #include "uhal/utilities/files.hpp"
 
-#include "logging/Logging.hpp"
-
 // appfwk headers
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/cmd/Nljs.hpp"
@@ -111,10 +109,19 @@ namespace dunedaq {
       
       m_dtp_pod = std::make_unique<dtpcontrols::DTPPodNode>( m_flx->getNode(std::string("")) );
       
-      // reset and configure
+      // here we will need to setup the FW config
+      // ie. number of links, number of pipes etc.
+
+      // reset
       m_dtp_pod->reset();
-      m_dtp_pod->configure();
       
+      // configure
+      std::vector<uint64_t> mask(40, 0);
+      uint32_t thresh = 20;
+      m_dtp_pod->configure(thresh, mask);
+      
+      // verify configuration
+
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 
     }
@@ -125,7 +132,7 @@ namespace dunedaq {
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
 
       if (m_dtp_pod) {
-	m_dtp_pod->enable();
+	//	m_dtp_pod->enable();
       }
       else {
         throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
@@ -139,7 +146,7 @@ namespace dunedaq {
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
 
       if (m_dtp_pod) {
-	m_dtp_pod->disable();
+	//	m_dtp_pod->disable();
       }
       else {
         throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
