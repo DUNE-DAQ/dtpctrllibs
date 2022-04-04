@@ -28,6 +28,10 @@ local cs = {
             doc="string name of managed device"),
 	s.field("uhal_log_level", self.uhal_log_level, "notice",
             doc="log level for uhal. Possible values are: fatal, error, warning, notice, info, debug."),
+        s.field("source", self.str, "ext",
+	    doc="Data source (int or ext)"),
+	s.field("threshold", self.uint_data, "20",
+            doc="Trigger primitive threshold"),
     ], doc="Structure for payload of DTP configure commands"),
 };
 
