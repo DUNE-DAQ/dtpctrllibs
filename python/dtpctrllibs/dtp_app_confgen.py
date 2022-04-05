@@ -29,6 +29,7 @@ def generate(
         RUN_NUMBER = 333, 
         CONNECTIONS_FILE="${DTPCONTROLS_SHARE}/config/dtp_connections.xml",
         DTP_DEVICE_NAME="flx-0-p2-hf",
+        DATA_SOURCE="int",
         UHAL_LOG_LEVEL="debug",
         OUTPUT_PATH=".",
     ):
@@ -60,6 +61,7 @@ def generate(
                 ("dtpctrl", dtpcontroller.ConfParams(
                         connections_file=CONNECTIONS_FILE,
                         device=DTP_DEVICE_NAME,
+                        source=DATA_SOURCE,
                         uhal_log_level=UHAL_LOG_LEVEL,
                         )),
                 
@@ -112,9 +114,10 @@ if __name__ == '__main__':
     @click.option('-c', '--connections-file', default="${DTPCONTROLS_SHARE}/config/dtp_connections.xml")
     @click.option('-d', '--dtp-device-name', default="flx-0-p2-hf")
     @click.option('-u', '--uhal-log-level', default="notice")
+    @click.option('-s', '--source-data', default="int")
     @click.option('-o', '--output-path', type=click.Path(), default='.')
     @click.argument('json_file', type=click.Path(), default='dtp_ctrl_app.json')
-    def cli(run_number, connections_file, dtp_device_name, uhal_log_level, output_path, json_file):
+    def cli(run_number, connections_file, dtp_device_name, uhal_log_level, source_data, output_path, json_file):
         """
           JSON_FILE: Input raw data file.
           JSON_FILE: Output json configuration file.
@@ -125,6 +128,7 @@ if __name__ == '__main__':
                     RUN_NUMBER = run_number,
                     CONNECTIONS_FILE=connections_file,
                     DTP_DEVICE_NAME = dtp_device_name,
+                    DATA_SOURCE = source_data,
                     UHAL_LOG_LEVEL = uhal_log_level,
                     OUTPUT_PATH = output_path,
                 ))
