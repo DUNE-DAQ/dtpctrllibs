@@ -112,15 +112,30 @@ namespace dunedaq {
       // here we will need to setup the FW config
       // ie. number of links, number of pipes etc.
 
+
       // reset
       m_dtp_pod->reset();
       
-      // configure
-      std::vector<uint64_t> mask(40, 0);
-      uint32_t thresh = 20;
-      m_dtp_pod->configure(thresh, mask);
-    
-      // verify configuration
+      // set source
+      if (m_dtp_cfg.source == "ext") {
+	m_dtp_pod->set_source_ext();
+      }
+      else {
+	m_dtp_pod->set_source_int();
+      }
+
+      // we could make these configurable at some point, but not needed yet
+      m_dtp_pod->set_sink_hits();       // set sink to hits
+      m_dtp_pod->set_crif_drop_empty(); // set CRIF to drop empty packets
+
+      // setup each link
+      m_dtp_pod->setup_processors();
+
+      // set TP threshold
+      m_dtp_pod->set_threshold_all(m_dtp_cfg.threshold);
+
+      // set masks - need to decide the interface/data structure
+      //      m_dtp_pod->set_channel_mask(m_dtp_cfg.mask);
 
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 
