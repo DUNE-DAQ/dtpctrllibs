@@ -15,8 +15,6 @@
 #include "dtpctrllibs/dtpcontrollerinfo/InfoNljs.hpp"
 #include "dtpctrllibs/dtpcontrollerinfo/InfoStructs.hpp"
 
-//#include "dtpctrllibs/DTPIssues.hpp"
-
 // dtpcontrols headers
 #include "dtpcontrols/toolbox.hpp"
 
@@ -147,7 +145,7 @@ namespace dunedaq {
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
 
       if (m_dtp_pod) {
-	//	m_dtp_pod->enable();
+	m_dtp_pod->enable_crif();
       }
       else {
         throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
@@ -161,7 +159,7 @@ namespace dunedaq {
       TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
 
       if (m_dtp_pod) {
-	//	m_dtp_pod->disable();
+	m_dtp_pod->disable_crif();
       }
       else {
         throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
