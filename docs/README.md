@@ -31,4 +31,4 @@ python -m dtpctrllibs.dtp_app_confgen dtp_app.json
 daq_application --name dtp_app -c stdin://dtp_app.json
 ```
 
-At the terminal that now appears, run 'init', 'conf', 'enable' commands in order to produce TPs.
+At the terminal that now appears, run 'init', 'conf', 'start', 'stop' commands in order to produce TPs.
