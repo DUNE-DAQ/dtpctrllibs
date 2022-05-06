@@ -16,7 +16,7 @@ find_package(pugixml REQUIRED)
 find_package(dtpcontrols REQUIRED)
 
 daq_codegen( dtpcontroller.jsonnet
-	     DEP_PKGS appfwk rcif cmdlib networkmanager TEMPLATES Structs.hpp.j2 Nljs.hpp.j2)
+	     DEP_PKGS appfwk iomanager rcif cmdlib networkmanager TEMPLATES Structs.hpp.j2 Nljs.hpp.j2)
 
 daq_codegen( dtpcontrollerinfo.jsonnet
 	     DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
