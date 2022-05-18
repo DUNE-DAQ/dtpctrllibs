@@ -30,7 +30,7 @@ namespace dunedaq::dtpctrllibs {
   }
 
   void
-  DTPWrapper::init(const data_t& args) {
+  DTPWrapper::init(const data_t& /* args */) {
 
     std::string device("flx-0-p2-hf");
     std::string conn_file = dtpcontrols::find_connection_file();
@@ -48,7 +48,7 @@ namespace dunedaq::dtpctrllibs {
   }
 
   void
-  DTPWrapper::configure(const data_t& args) {
+  DTPWrapper::configure(const data_t& /* args */) {
 
   }
   
