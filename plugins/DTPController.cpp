@@ -109,7 +109,10 @@ namespace dunedaq {
       
       // here we will need to setup the FW config
       // ie. number of links, number of pipes etc.
-
+      int n_links = m_dtp_pod->get_n_links();
+      for (int i = 0; i<n_links; ++i) {
+	m_dtp_pod->get_link_processor_node(i).setup(true, true, 20);
+      }
 
       // reset
       m_dtp_pod->reset();
