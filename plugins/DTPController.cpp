@@ -116,18 +116,18 @@ namespace dunedaq {
       
       // set source
       if (m_dtp_cfg.source == "ext") {
-	m_dtp_pod->set_source_ext();
+	m_dtp_pod->get_flowmaster_node().set_source_gbt();
       }
       else {
-	m_dtp_pod->set_source_int();
+	m_dtp_pod->get_flowmaster_node().set_source_wtor();
       }
 
       // we could make these configurable at some point, but not needed yet
-      m_dtp_pod->set_sink_hits();       // set sink to hits
-      m_dtp_pod->set_crif_drop_empty(); // set CRIF to drop empty packets
+      m_dtp_pod->get_flowmaster_node().set_sink_hits();       // set sink to hits
+      m_dtp_pod->get_crif_node().set_drop_empty(); // set CRIF to drop empty packets
 
       // setup each link
-      m_dtp_pod->setup_processors();
+      //      m_dtp_pod->setup_processors();
 
       // set TP threshold
       m_dtp_pod->set_threshold_all(m_dtp_cfg.threshold);
