@@ -33,7 +33,7 @@
 #include <vector>
 #include <regex>
 
-#define TLVL_ENTER_EXIT_METHODS 10
+#define TLVL_INFO 10
 
 namespace dunedaq {
 
@@ -58,15 +58,14 @@ namespace dunedaq {
     }
     
     void DTPController::init(const data_t& /* init_data */) {
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": init() method does nothing";
     }
     
     void
     DTPController::do_configure(const data_t& args)
     {
       
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_configure() method";
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_configure() method";
       
       m_dtp_cfg = args.get<dtpcontroller::ConfParams>();
       
@@ -109,14 +108,14 @@ namespace dunedaq {
       
       // here we will need to setup the FW config
       // ie. number of links, number of pipes etc.
-      int n_links = m_dtp_pod->get_n_links();
-      for (int i = 0; i<n_links; ++i) {
-	m_dtp_pod->get_link_processor_node(i).setup(true, true, 20);
-      }
+
 
       // reset
       m_dtp_pod->reset();
       
+      // set CRIF to drop empty
+      m_dtp_pod->get_crif_node().set_drop_empty();
+
       // set source
       if (m_dtp_cfg.source == "ext") {
 	m_dtp_pod->get_flowmaster_node().set_source_gbt();
@@ -125,27 +124,40 @@ namespace dunedaq {
 	m_dtp_pod->get_flowmaster_node().set_source_wtor();
       }
 
-      // we could make these configurable at some point, but not needed yet
-      m_dtp_pod->get_flowmaster_node().set_sink_hits();       // set sink to hits
-      m_dtp_pod->get_crif_node().set_drop_empty(); // set CRIF to drop empty packets
+      // set sink
+      m_dtp_pod->get_flowmaster_node().set_sink_hits();
 
-      // setup each link
-      //      m_dtp_pod->setup_processors();
-
-      // set TP threshold
-      m_dtp_pod->set_threshold_all(m_dtp_cfg.threshold);
+      // setup links
+      int n_links = m_dtp_pod->get_n_links();
+      for (int i = 0; i<n_links; ++i) {
+	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
+	m_dtp_pod->get_link_processor_node(i).setup(true, true, 0x7fff);
+	sleep(1);
+      }
 
       // set masks - need to decide the interface/data structure
       //      m_dtp_pod->set_channel_mask(m_dtp_cfg.mask);
 
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
+      // reudce threshold for running
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": waiting for pedestal to settle...";
+
+      sleep(2);
+      for (int i = 0; i<n_links; ++i) {
+	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting threshold for link processor " << i;
+	for (int j = 0; j<m_dtp_pod->get_n_streams(); ++j) {
+	  m_dtp_pod->get_link_processor_node(i).get_stream_proc_array_node().stream_select(j, true);
+	  m_dtp_pod->get_link_processor_node(i).get_stream_proc_array_node().get_stream_proc_node().set_threshold(m_dtp_cfg.threshold, true);
+	}
+      }
+
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_configure() method";
 
     }
     
     void
     DTPController::do_start(const data_t& /* args */) {
 
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_start() method";
 
       if (m_dtp_pod) {
 	m_dtp_pod->enable_crif();
@@ -154,12 +166,12 @@ namespace dunedaq {
         throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
       }
 
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_start() method";
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_start() method";
     }
 
     void
     DTPController::do_stop(const data_t& /* args */) {
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_stop() method";
 
       if (m_dtp_pod) {
 	m_dtp_pod->disable_crif();
@@ -168,14 +180,14 @@ namespace dunedaq {
         throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
       }
 
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_stop() method";
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_stop() method";
     }
 
 
     void                                                                  
     DTPController::do_reset(const data_t& /* args */)
     {
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_reset() method";
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_reset() method";
 
       if (m_dtp_pod) {
 	m_dtp_pod->reset();
@@ -184,7 +196,7 @@ namespace dunedaq {
 	throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
       }
 
-      TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_reset() method";
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_reset() method";
     }
 
 
