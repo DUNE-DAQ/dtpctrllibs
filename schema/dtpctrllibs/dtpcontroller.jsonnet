@@ -20,6 +20,8 @@ local cs = {
 
     double_data: s.number("DoubleData", "f8", 
          doc="A double"),
+
+    vuint_data: s.sequence("VUintData", self.uint_data, doc="Vector of uints"),
       
     conf: s.record("ConfParams",[
         s.field("connections_file", self.str, "",
@@ -32,6 +34,7 @@ local cs = {
 	    doc="Data source (int or ext)"),
 	s.field("threshold", self.uint_data, "20",
             doc="Trigger primitive threshold"),
+        s.field("masks", self.vuint_data, ""),
     ], doc="Structure for payload of DTP configure commands"),
 };
 

@@ -129,24 +129,39 @@ namespace dunedaq {
 
       // setup links
       int n_links = m_dtp_pod->get_n_links();
+      int n_streams = m_dtp_pod->get_n_streams();
       for (int i = 0; i<n_links; ++i) {
 	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
 	m_dtp_pod->get_link_processor_node(i).setup(true, true, 0x7fff);
 	sleep(1);
       }
 
-      // set masks - need to decide the interface/data structure
-      //      m_dtp_pod->set_channel_mask(m_dtp_cfg.mask);
+      // set masks
+      int masks_size = m_dtp_cfg.masks.size();
+      if (masks_size == n_links * n_streams) {
+
+	for (uint32_t i_link=0; i_link < static_cast<uint32_t>(n_links); i_link++) {
+	  for (uint32_t i_stream=0; i_stream < static_cast<uint32_t>(n_streams); i_stream++) {
+	    
+	    int i_mask = (i_link * n_streams) + i_stream;
+	    uint64_t mask = m_dtp_cfg.masks.at(i_mask);
+	    m_dtp_pod->get_link_processor_node(i_link).set_channel_mask_all( i_stream, mask );
+	    
+	  }
+	}
+
+      }
+
 
       // reudce threshold for running
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": waiting for pedestal to settle...";
 
       sleep(2);
-      for (int i = 0; i<n_links; ++i) {
-	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting threshold for link processor " << i;
-	for (int j = 0; j<m_dtp_pod->get_n_streams(); ++j) {
-	  m_dtp_pod->get_link_processor_node(i).get_stream_proc_array_node().stream_select(j, true);
-	  m_dtp_pod->get_link_processor_node(i).get_stream_proc_array_node().get_stream_proc_node().set_threshold(m_dtp_cfg.threshold, true);
+
+      for (uint32_t i_link = 0; i_link<static_cast<uint32_t>(n_links); ++i_link) {
+	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting threshold for link processor " << i_link << " to " << m_dtp_cfg.threshold;
+	for (uint32_t i_stream = 0; i_stream<static_cast<uint32_t>(m_dtp_pod->get_n_streams()); ++i_stream) {
+	  m_dtp_pod->get_link_processor_node(i_link).set_threshold(i_stream, m_dtp_cfg.threshold);
 	}
       }
 
