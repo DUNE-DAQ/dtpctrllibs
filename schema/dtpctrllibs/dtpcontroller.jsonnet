@@ -34,8 +34,10 @@ local cs = {
 	    doc="Data source (int or ext)"),
 	s.field("threshold", self.uint_data, "20",
             doc="Trigger primitive threshold"),
-        s.field("masks", self.vuint_data, ""),
+        s.field("masks", self.vuint_data, "",
+            doc="Channel mask array"),
     ], doc="Structure for payload of DTP configure commands"),
+
 };
 
 s_app + moo.oschema.sort_select(cs)
