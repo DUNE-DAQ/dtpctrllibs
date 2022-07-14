@@ -191,6 +191,7 @@ namespace dunedaq {
     
     void
     DTPController::do_start(const data_t& /* args */) {
+
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_start() method";
 
       if (m_dtp_cfg.source == "int") {
@@ -209,6 +210,7 @@ namespace dunedaq {
 
     void
     DTPController::do_stop(const data_t& /* args */) {
+
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_stop() method";
 
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_stop() method";
