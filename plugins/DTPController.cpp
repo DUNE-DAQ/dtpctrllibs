@@ -164,7 +164,7 @@ namespace dunedaq {
 	    
 	    int i_mask = (i_link * n_streams) + i_stream;
 	    uint64_t mask = m_dtp_cfg.masks.at(i_mask);
-	    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting masks for link " << i_link << " stream " << i_stream << " to " << mask;
+	    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting masks for link " << i_link << " stream " << i_stream << " to " << std::hex << mask;
 	    m_dtp_pod->get_link_processor_node(i_link).set_channel_mask_all( i_stream, mask );
 	    
 	  }
