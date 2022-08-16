@@ -132,7 +132,8 @@ namespace dunedaq {
 	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting input to wibulator";
 	m_dtp_pod->get_flowmaster_node().set_source_wtor();
 	for (int i=0; i < n_links; ++i) {
-	  m_dtp_pod->get_wibulator_node(i).load_WIB_pattern_from_file(m_dtp_cfg.pattern);
+	  auto data = dunedaq::dtpcontrols::read_WIB_pattern_from_file(m_dtp_cfg.pattern);
+	  m_dtp_pod->get_wibulator_node(i).write_pattern(data);
 	}
       }
 
@@ -171,7 +172,6 @@ namespace dunedaq {
 	}
 
       }
-
 
       // reduce threshold for running
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": waiting for pedestal to settle...";
