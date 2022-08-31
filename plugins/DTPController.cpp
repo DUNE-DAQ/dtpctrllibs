@@ -31,7 +31,7 @@
 
 #include <string>
 #include <vector>
-#include <regex>
+
 
 #define TLVL_INFO 10
 
@@ -67,41 +67,48 @@ namespace dunedaq {
       
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_configure() method";
       
-      m_dtp_cfg = args.get<dtpcontroller::ConfParams>();
+      m_dtp_cfg = args.get<dtpcontroller::Conf>();
       
       // set UHAL log level
       if (m_dtp_cfg.uhal_log_level.compare("debug") == 0) {
-	uhal::setLogLevelTo(uhal::Debug());
+        uhal::setLogLevelTo(uhal::Debug());
       } else if (m_dtp_cfg.uhal_log_level.compare("info") == 0) {
-	uhal::setLogLevelTo(uhal::Info());
+        uhal::setLogLevelTo(uhal::Info());
       } else if (m_dtp_cfg.uhal_log_level.compare("notice") == 0) {
-	uhal::setLogLevelTo(uhal::Notice());
+        uhal::setLogLevelTo(uhal::Notice());
       } else if (m_dtp_cfg.uhal_log_level.compare("warning") == 0) {
-	uhal::setLogLevelTo(uhal::Warning());
+        uhal::setLogLevelTo(uhal::Warning());
       } else if (m_dtp_cfg.uhal_log_level.compare("error") == 0) {
-	uhal::setLogLevelTo(uhal::Error());
+        uhal::setLogLevelTo(uhal::Error());
       } else if (m_dtp_cfg.uhal_log_level.compare("fatal") == 0) {
-	uhal::setLogLevelTo(uhal::Fatal());
+        uhal::setLogLevelTo(uhal::Fatal());
       } else {
-	throw InvalidUHALLogLevel(ERS_HERE, m_dtp_cfg.uhal_log_level);
+        throw InvalidUHALLogLevel(ERS_HERE, m_dtp_cfg.uhal_log_level);
       }
       
       // get the connections
       std::vector<std::string> pcols = {"ipbusflx-2.0"};
       std::string conn_file("file://");
       conn_file+=m_dtp_cfg.connections_file;
-      resolve_environment_variables(conn_file);
+
+      //TLOG() << getenv("$HOME");
+      //TLOG() << getenv("$DTPCONTROLS_SHARE");
+
+      // TLOG() << get_name() << "conf: con. file before env var expansion: " << conn_file;
+      // conn_file = resolve_environment_variables(conn_file);
+      // TLOG() << get_name() << "conf: con. file after env var expansion:  " << conn_file;
+
       try {
-	m_cm = std::make_unique<uhal::ConnectionManager>(conn_file, pcols);
+        m_cm = std::make_unique<uhal::ConnectionManager>(conn_file, pcols);
       } catch (const uhal::exception::FileNotFound& excpt) {
-	throw UHALConnectionsFileIssue(ERS_HERE, conn_file, excpt);
+        throw UHALConnectionsFileIssue(ERS_HERE, conn_file, excpt);
       }
       
       // get the device
       try {
-	m_flx = std::make_unique<uhal::HwInterface>( m_cm->getDevice(m_dtp_cfg.device) );
+        m_flx = std::make_unique<uhal::HwInterface>( m_cm->getDevice(m_dtp_cfg.device) );
       } catch (const uhal::exception::ConnectionUIDDoesNotExist& except) {
-	throw UHALDeviceNameIssue(ERS_HERE, m_dtp_cfg.device, except);
+        throw UHALDeviceNameIssue(ERS_HERE, m_dtp_cfg.device, except);
       }
       
       m_dtp_pod = std::make_unique<dtpcontrols::DTPPodNode>( m_flx->getNode(std::string("")) );
@@ -125,65 +132,74 @@ namespace dunedaq {
 
       // set source
       if (m_dtp_cfg.source == "ext") {
-	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting input to GBT";
-	m_dtp_pod->get_flowmaster_node().set_source_gbt();
+        TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting input to GBT";
+        m_dtp_pod->get_flowmaster_node().set_source_gbt();
       }
       else {
-	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting input to wibulator";
-	m_dtp_pod->get_flowmaster_node().set_source_wtor();
-	for (int i=0; i < n_links; ++i) {
-	  auto data = dunedaq::dtpcontrols::read_WIB_pattern_from_file(m_dtp_cfg.pattern);
-	  m_dtp_pod->get_wibulator_node(i).write_pattern(data);
-	}
+        TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting input to wibulator";
+        m_dtp_pod->get_flowmaster_node().set_source_wtor();
+        for (int i=0; i < n_links; ++i) {
+          auto data = dunedaq::dtpcontrols::read_WIB_pattern_from_file(m_dtp_cfg.pattern);
+          m_dtp_pod->get_wibulator_node(i).write_pattern(data);
+        }
       }
 
       // set sink
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting sink to hits";
       m_dtp_pod->get_flowmaster_node().set_sink_hits();
 
-      // set high threshold - initially
-      TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting TP threshold to maximum (0x7fff)";
-      for (int i_link = 0; i_link<n_links; ++i_link) {
-	for (int i_stream = 0; i_stream<n_streams; ++i_stream) {
-	  m_dtp_pod->get_link_processor_node(i_link).set_threshold(i_stream, 0x7fff);
-	}
-      }
+      //
+      // NO LONGER REQUIRED in FW v3....
+      //
+      // set high threshold - initially.  
+      // TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting TP threshold to maximum (0x7fff)";
+      // for (int i_link = 0; i_link<n_links; ++i_link) {
+      //   for (int i_stream = 0; i_stream<n_streams; ++i_stream) {
+      //     m_dtp_pod->get_link_processor_node(i_link).set_threshold(i_stream, 0x7fff);
+      //   }
+      // }
 
-      // enable links
-      for (int i = 0; i<n_links; ++i) {
-	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
-	m_dtp_pod->get_link_processor_node(i).setup(true, true);
-	sleep(1);
+      // set threshold
+      for (int i_link = 0; i_link<n_links; ++i_link) {
+        TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting threshold for link processor " << i_link << " to " << m_dtp_cfg.threshold;
+        for (int i_stream = 0; i_stream<n_streams; ++i_stream) {
+          m_dtp_pod->get_link_processor_node(i_link).set_threshold(i_stream, m_dtp_cfg.threshold);
+        }
       }
 
       // set masks
       int masks_size = 20; // m_dtp_cfg.masks.size();
       if (masks_size == n_links * n_streams) {
-
-	for (int i_link=0; i_link < n_links; i_link++) {
-	  for (int i_stream=0; i_stream < n_streams; i_stream++) {
-	    
-	    int i_mask = (i_link * n_streams) + i_stream;
-	    uint64_t mask = m_dtp_cfg.masks.at(i_mask);
-	    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting masks for link " << i_link << " stream " << i_stream << " to " << std::hex << mask;
-	    m_dtp_pod->get_link_processor_node(i_link).set_channel_mask_all( i_stream, mask );
-	    
-	  }
-	}
+        for (int i_link=0; i_link < n_links; i_link++) {
+          for (int i_stream=0; i_stream < n_streams; i_stream++) {
+            int i_mask = (i_link * n_streams) + i_stream;
+            uint64_t mask = m_dtp_cfg.masks.at(i_mask);
+            TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting masks for link " << i_link << " stream " << i_stream << " to " << std::hex << mask;
+            m_dtp_pod->get_link_processor_node(i_link).set_channel_mask_all( i_stream, mask );
+          }
+        }
 
       }
 
-      // reduce threshold for running
-      TLOG_DEBUG(TLVL_INFO) << get_name() << ": waiting for pedestal to settle...";
+      // pedestal capture ON
 
-      sleep(2);
+      // TODO
 
-      for (int i_link = 0; i_link<n_links; ++i_link) {
-	TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting threshold for link processor " << i_link << " to " << m_dtp_cfg.threshold;
-	for (int i_stream = 0; i_stream<n_streams; ++i_stream) {
-	  m_dtp_pod->get_link_processor_node(i_link).set_threshold(i_stream, m_dtp_cfg.threshold);
-	}
+      // enable links
+      for (int i = 0; i<n_links; ++i) {
+        TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
+        m_dtp_pod->get_link_processor_node(i).setup(true, true);
+        sleep(1);
       }
+
+      // pedestal capture OFF
+
+      // TODO
+      
+      // enable TP output
+
+      // TODO
+
 
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_configure() method";
 
@@ -195,17 +211,18 @@ namespace dunedaq {
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_start() method";
 
       if (m_dtp_cfg.source == "int") {
-	if (m_dtp_pod) {
-	  for (int i=0; i < m_dtp_pod->get_n_links(); ++i) {
-	    m_dtp_pod->get_wibulator_node(i).fire();
-	  }
-	}
-	else {
-	  throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
-	}
+        if (m_dtp_pod) {
+          for (int i=0; i < m_dtp_pod->get_n_links(); ++i) {
+            m_dtp_pod->get_wibulator_node(i).fire();
+          }
+        }
+        else {
+          throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
+        }
       }
       
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_start() method";
+
     }
 
     void
@@ -223,10 +240,10 @@ namespace dunedaq {
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_reset() method";
 
       if (m_dtp_pod) {
-	m_dtp_pod->reset();
+        m_dtp_pod->reset();
       }
       else {
-	throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
+        throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
       }
 
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_reset() method";
@@ -239,18 +256,6 @@ namespace dunedaq {
       dtpcontrollerinfo::Info module_info;
       module_info.dummy = 4;
       ci.add(module_info);
-    }
-    
-    void
-    DTPController::resolve_environment_variables(std::string& input_string)
-    {
-      static std::regex env_var_pattern("\\$\\{([^}]+)\\}");
-      std::smatch match;
-      while (std::regex_search(input_string, match, env_var_pattern)) {
-	const char* s = getenv(match[1].str().c_str());
-	const std::string env_var(s == nullptr ? "" : s);
-	input_string.replace(match[0].first, match[0].second, env_var);
-      }
     }
 
     

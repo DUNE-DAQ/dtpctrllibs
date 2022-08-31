@@ -24,7 +24,7 @@ local cs = {
     double_data: s.number("DoubleData", "f8", 
          doc="A double"),
 
-    conf: s.record("ConfParams",[
+    conf: s.record("Conf",[
         s.field("connections_file", self.str, "",
             doc="uHAL connections file"),
         s.field("device", self.str, "",
