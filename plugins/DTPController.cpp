@@ -90,14 +90,6 @@ namespace dunedaq {
       std::vector<std::string> pcols = {"ipbusflx-2.0"};
       std::string conn_file("file://");
       conn_file+=m_dtp_cfg.connections_file;
-
-      //TLOG() << getenv("$HOME");
-      //TLOG() << getenv("$DTPCONTROLS_SHARE");
-
-      // TLOG() << get_name() << "conf: con. file before env var expansion: " << conn_file;
-      // conn_file = resolve_environment_variables(conn_file);
-      // TLOG() << get_name() << "conf: con. file after env var expansion:  " << conn_file;
-
       try {
         m_cm = std::make_unique<uhal::ConnectionManager>(conn_file, pcols);
       } catch (const uhal::exception::FileNotFound& excpt) {
@@ -143,6 +135,7 @@ namespace dunedaq {
           m_dtp_pod->get_wibulator_node(i).write_pattern(data);
         }
       }
+      m_dtp_pod->getClient().dispatch();
 
       // set sink
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting sink to hits";
@@ -182,23 +175,37 @@ namespace dunedaq {
       }
 
       // pedestal capture ON
-
-      // TODO
+      for (int i_link = 0; i_link<n_links; ++i_link) {
+        for (int i_stream = 0; i_stream<n_streams; ++i_stream) {
+          TLOG_DEBUG(TLVL_INFO) << get_name() << ":capturing pedestal for link " << i_link << " stream " << i_stream;
+          m_dtp_pod->get_link_processor_node(i_link).capture_pedestal(i_stream, true);
+        }
+      }
+      m_dtp_pod->getClient().dispatch();
 
       // enable links
       for (int i = 0; i<n_links; ++i) {
         TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
-        m_dtp_pod->get_link_processor_node(i).setup(true, true);
-        sleep(1);
+        m_dtp_pod->get_link_processor_node(i).setup(true, false);
       }
+      m_dtp_pod->getClient().dispatch();
+
+      // pause to ensure pedestals are all captured
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": waiting for pedestal captures";
+      sleep(1);
 
       // pedestal capture OFF
-
-      // TODO
+      for (int i_link = 0; i_link<n_links; ++i_link) {
+        for (int i_stream = 0; i_stream<n_streams; ++i_stream) {
+          TLOG_DEBUG(TLVL_INFO) << get_name() << ": disabling pedestal capture for link " << i_link << " stream " << i_stream;
+          m_dtp_pod->get_link_processor_node(i_link).capture_pedestal(i_stream, false);
+        }
+      }
+      m_dtp_pod->getClient().dispatch();
       
       // enable TP output
-
-      // TODO
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling output to DMA";
+      m_dtp_pod->get_flowmaster_node().set_outflow(true, true);
 
 
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_configure() method";
