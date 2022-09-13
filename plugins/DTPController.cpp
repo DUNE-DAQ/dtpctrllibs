@@ -113,8 +113,38 @@ namespace dunedaq {
       // reset
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": resetting DTP pod";
       m_dtp_pod->reset();
+      m_dtp_pod->getClient().dispatch();
+
+      // //
+      // // NO LONGER REQUIRED in FW v3....
+      // //
+      // // set high threshold - initially.  
+      // // TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting TP threshold to maximum (0x7fff)";
+      // // for (int i_link = 0; i_link<n_links; ++i_link) {
+      // //   for (int i_stream = 0; i_stream<n_streams; ++i_stream) {
+      // //     m_dtp_pod->get_link_processor_node(i_link).set_threshold(i_stream, 0x7fff);
+      // //   }
+      // // }
       
-      // set CRIF to drop empty
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_configure() method";
+
+    }
+    
+    void
+    DTPController::do_start(const data_t& /* args */) {
+
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_start() method";
+
+      // here we will need to setup the FW config
+      // ie. number of links, number of pipes etc.
+      int n_links = m_dtp_pod->get_n_links();
+      int n_streams = m_dtp_pod->get_n_streams();
+
+      // reset
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": resetting DTP pod";
+      m_dtp_pod->reset();
+
+      //set CRIF to drop empty
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting CRIF to drop empy packets";
       m_dtp_pod->get_crif_node().set_drop_empty();
 
@@ -135,22 +165,10 @@ namespace dunedaq {
           m_dtp_pod->get_wibulator_node(i).write_pattern(data);
         }
       }
-      m_dtp_pod->getClient().dispatch();
 
       // set sink
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting sink to hits";
       m_dtp_pod->get_flowmaster_node().set_sink_hits();
-
-      //
-      // NO LONGER REQUIRED in FW v3....
-      //
-      // set high threshold - initially.  
-      // TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting TP threshold to maximum (0x7fff)";
-      // for (int i_link = 0; i_link<n_links; ++i_link) {
-      //   for (int i_stream = 0; i_stream<n_streams; ++i_stream) {
-      //     m_dtp_pod->get_link_processor_node(i_link).set_threshold(i_stream, 0x7fff);
-      //   }
-      // }
 
       // set threshold
       for (int i_link = 0; i_link<n_links; ++i_link) {
@@ -171,8 +189,8 @@ namespace dunedaq {
             m_dtp_pod->get_link_processor_node(i_link).set_channel_mask_all( i_stream, mask );
           }
         }
-
       }
+      m_dtp_pod->getClient().dispatch();
 
       // pedestal capture ON
       for (int i_link = 0; i_link<n_links; ++i_link) {
@@ -202,20 +220,11 @@ namespace dunedaq {
         }
       }
       m_dtp_pod->getClient().dispatch();
-      
+
       // enable TP output
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling output to DMA";
       m_dtp_pod->get_flowmaster_node().set_outflow(true, true);
 
-
-      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_configure() method";
-
-    }
-    
-    void
-    DTPController::do_start(const data_t& /* args */) {
-
-      TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_start() method";
 
       if (m_dtp_cfg.source == "int") {
         if (m_dtp_pod) {
