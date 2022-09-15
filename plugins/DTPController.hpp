@@ -14,7 +14,7 @@
 #include "dtpctrllibs/dtpcontroller/Structs.hpp"
 
 // dtpcontrols
-#include "dtpcontrols/DTPPodNode.hpp"
+#include "dtpcontrols/DTPPodController.hpp"
 
 // uhal
 #include "uhal/ConnectionManager.hpp"
@@ -72,15 +72,13 @@ namespace dunedaq {
       void do_configure(const data_t& args);
       void do_start(const data_t& args);
       void do_stop(const data_t& args);
-
+      void do_scrap(const data_t& args);
       void do_reset(const data_t& args);
 
       void get_info(opmonlib::InfoCollector& ci, int level) override;
 
       // connections to the hardware
-      std::unique_ptr<uhal::ConnectionManager> m_cm;
-      std::unique_ptr<uhal::HwInterface> m_flx;
-      std::unique_ptr<dtpcontrols::DTPPodNode> m_dtp_pod;
+      std::unique_ptr<dtpcontrols::DTPPodController> m_pod;
 
       // config data
       dtpcontroller::Conf m_dtp_cfg;

@@ -33,10 +33,10 @@ set(DTPCTRLLIBS_DEPENDENCIES
 )
 
 ##############################################################################
-daq_add_library(DTPWrapper.cpp LINK_LIBRARIES ${DTPCTRLLIBS_DEPENDENCIES})
+# daq_add_library(DTPWrapper.cpp LINK_LIBRARIES ${DTPCTRLLIBS_DEPENDENCIES})
 
 # plugins
-daq_add_plugin(DTPController duneDAQModule LINK_LIBRARIES dtpcontrols::dtpcontrols dtpctrllibs uhal::uhal pugixml::pugixml)
+daq_add_plugin(DTPController duneDAQModule LINK_LIBRARIES ${DTPCTRLLIBS_DEPENDENCIES} uhal::uhal pugixml::pugixml)
 
 ###############################################################################
 #daq_add_python_bindings(toy_wrapper.cpp LINK_LIBRARIES ${PROJECT_NAME})
