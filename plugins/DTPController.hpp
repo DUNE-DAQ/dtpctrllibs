@@ -14,7 +14,7 @@
 #include "dtpctrllibs/dtpcontroller/Structs.hpp"
 
 // dtpcontrols
-#include "dtpcontrols/DTPPodNode.hpp"
+#include "dtpcontrols/DTPPodController.hpp"
 
 // uhal
 #include "uhal/ConnectionManager.hpp"
@@ -34,9 +34,23 @@
 
 #include <memory>
 #include <string>
+#include <regex>
 
 namespace dunedaq {
   namespace dtpctrllibs {
+
+    inline std::string
+    resolve_environment_variables(std::string text) {
+      static const std::regex env_re{R"--(\$\{([^}]+)\})--"};
+      std::smatch match;
+      while (std::regex_search(text, match, env_re)) {
+        auto const from = match[0];
+        const char* s = getenv(match[1].str().c_str());
+        const std::string env_var(s == nullptr ? "" : s);
+        text.replace(from.first, from.second, env_var);
+      }
+      return text;
+    }
 
     class DTPController : public dunedaq::appfwk::DAQModule
     {
@@ -54,30 +68,19 @@ namespace dunedaq {
     private:
 
       // Commands
-
       void do_configure(const data_t& args);
       void do_start(const data_t& args);
       void do_stop(const data_t& args);
-
+      void do_scrap(const data_t& args);
       void do_reset(const data_t& args);
 
       void get_info(opmonlib::InfoCollector& ci, int level) override;
 
-
-      // helpers
-      void resolve_environment_variables(std::string& input_string);
-
       // connections to the hardware
-      std::unique_ptr<uhal::ConnectionManager> m_cm;
-      std::unique_ptr<uhal::HwInterface> m_flx;
-      std::unique_ptr<dtpcontrols::DTPPodNode> m_dtp_pod;
+      std::unique_ptr<dtpcontrols::DTPPodController> m_pod;
 
       // config data
-      dtpcontroller::ConfParams m_dtp_cfg;
-
-      
-      //      std::string m_queue; // dummy queue
-      //      std::unique_ptr<sink_t> m_queue;
+      dtpcontroller::Conf m_dtp_cfg;
 
     };
 
