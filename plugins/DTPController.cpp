@@ -59,6 +59,61 @@ void DTPController::init(const data_t& /* init_data */) {
 }
 
 //-----------------------------------------------------------------------------
+void DTPController::do_configure_mk1(const data_t& args) {
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_configure() method";
+
+  m_dtp_cfg = args.get<dtpcontroller::Conf>();
+
+  // set UHAL log level
+  if (m_dtp_cfg.uhal_log_level.compare("debug") == 0) {
+    uhal::setLogLevelTo(uhal::Debug());
+  } else if (m_dtp_cfg.uhal_log_level.compare("info") == 0) {
+    uhal::setLogLevelTo(uhal::Info());
+  } else if (m_dtp_cfg.uhal_log_level.compare("notice") == 0) {
+    uhal::setLogLevelTo(uhal::Notice());
+  } else if (m_dtp_cfg.uhal_log_level.compare("warning") == 0) {
+    uhal::setLogLevelTo(uhal::Warning());
+  } else if (m_dtp_cfg.uhal_log_level.compare("error") == 0) {
+    uhal::setLogLevelTo(uhal::Error());
+  } else if (m_dtp_cfg.uhal_log_level.compare("fatal") == 0) {
+    uhal::setLogLevelTo(uhal::Fatal());
+  } else {
+    throw InvalidUHALLogLevel(ERS_HERE, m_dtp_cfg.uhal_log_level);
+  }
+
+  // get the connections
+  std::vector<std::string> pcols = {"ipbusflx-2.0"};
+  std::string conn_file("file://");
+  conn_file += m_dtp_cfg.connections_file;
+  std::unique_ptr<uhal::ConnectionManager> cm;
+  try {
+    cm = std::make_unique<uhal::ConnectionManager>(conn_file, pcols);
+  } catch (const uhal::exception::FileNotFound& excpt) {
+    throw UHALConnectionsFileIssue(ERS_HERE, conn_file, excpt);
+  }
+
+  // get the device
+  auto devices = cm->getDevices();
+  if (std::find(devices.begin(), devices.end(), m_dtp_cfg.device) == devices.end()) {
+    throw UHALDeviceNameIssue(ERS_HERE, m_dtp_cfg.device);
+  }
+
+  m_pod = std::make_unique<dtpcontrols::DTPPodController>(cm->getDevice(m_dtp_cfg.device));
+
+  // here we will need to setup the FW config
+  // ie. number of links, number of pipes etc.
+  // uint n_links = m_pod->get_n_links();
+  // uint n_streams = m_pod->get_n_streams();
+
+  // reset
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": resetting DTP pod";
+  m_pod->reset();
+
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_configure() method";
+}
+
+
+//-----------------------------------------------------------------------------
 void DTPController::do_configure(const data_t& args) {
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_configure() method";
 
@@ -105,33 +160,150 @@ void DTPController::do_configure(const data_t& args) {
   uint n_links = m_pod->get_n_links();
   uint n_streams = m_pod->get_n_streams();
 
-  // reset
+  //
+  // RESET
+  //
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": resetting DTP pod";
   m_pod->reset();
-  // m_pod->get_node().getClient().dispatch();
 
-  // //
-  // // NO LONGER REQUIRED in FW v3....
-  // //
-  // // set high threshold - initially.
-  // // TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting TP threshold to maximum (0x7fff)";
-  // // for (int i_link = 0; i_link<n_links; ++i_link) {
-  // //   for (int i_stream = 0; i_stream<n_streams; ++i_stream) {
-  // //     m_pod->get_link_processor_node(i_link).set_threshold(i_stream, 0x7fff);
-  // //   }
-  // // }
+  //
+  // CRIF
+  //
+  // set CRIF to drop empty
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting CRIF to drop empy packets";
+  m_pod->get_crif_node().set_drop_empty();
+
+  // enable CRIF
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling CRIF output";
+  m_pod->get_crif_node().enable();
+
+
+  //
+  // DATAFLOW
+  //
+  // set source
+  if (m_dtp_cfg.source == "ext") {
+    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting input to GBT";
+    m_pod->get_flowmaster_node().set_source_gbt();
+  } else {
+    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting input to wibulator";
+    m_pod->get_flowmaster_node().set_source_wtor();
+    for (uint i = 0; i < n_links; ++i) {
+      auto data = dunedaq::dtpcontrols::read_WIB_pattern_from_file(m_dtp_cfg.pattern);
+      m_pod->get_wibulator_node(i).write_pattern(data);
+    }
+  }
+
+  // set sink
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting sink to hits";
+  m_pod->get_flowmaster_node().set_sink_hits();
+
+  //
+  // HITFINDER CHAIN
+  // 
+  // set threshold
+  for (uint i_link = 0; i_link < n_links; ++i_link) {
+    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting threshold for link processor " << i_link << " to " << m_dtp_cfg.threshold;
+    for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
+      m_pod->get_link_processor_node(i_link).set_threshold(i_stream, m_dtp_cfg.threshold);
+    }
+  }
+
+  // set masks
+  int masks_size = 20;  // m_dtp_cfg.masks.size();
+  if (masks_size == n_links * n_streams) {
+    for (uint i_link = 0; i_link < n_links; i_link++) {
+      for (uint i_stream = 0; i_stream < n_streams; i_stream++) {
+        int i_mask = (i_link * n_streams) + i_stream;
+        uint64_t mask = m_dtp_cfg.masks.at(i_mask);
+        TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting masks for link " << i_link << " stream " << i_stream << " to " << std::hex << mask;
+        m_pod->get_link_processor_node(i_link).set_channel_mask_all(i_stream, mask);
+      }
+    }
+  }
+  m_pod->get_node().getClient().dispatch();
+
+  //
+  // FIRE WIBULATORS (if required by config)
+  //
+  if (m_dtp_cfg.source == "int") {
+    if (m_pod) {
+      for (uint i = 0; i < m_pod->get_n_links(); ++i) {
+        m_pod->get_wibulator_node(i).fire();
+      }
+    } else {
+      throw ModuleNotConfigured(ERS_HERE, std::string("DTPController"));
+    }
+  }
 
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_configure() method";
 }
 
+
 //-----------------------------------------------------------------------------
 void DTPController::do_start(const data_t& /* args */) {
+
+  // here we will need to setup the FW config
+  // ie. number of links, number of pipes etc.
+  uint n_links = m_pod->get_n_links();
+  uint n_streams = m_pod->get_n_streams();
+
+  // disable links
+  for (uint i = 0; i < n_links; ++i) {
+    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
+    m_pod->get_link_processor_node(i).setup(false, false);
+  }
+  m_pod->get_node().getClient().dispatch();
+
+  // pedestal capture ON
+  for (uint i_link = 0; i_link < n_links; ++i_link) {
+    for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ":capturing pedestal for link " << i_link << " stream " << i_stream;
+      m_pod->get_link_processor_node(i_link).capture_pedestal(i_stream, true);
+    }
+  }
+  m_pod->get_node().getClient().dispatch();
+
+  // enable links
+  for (uint i = 0; i < n_links; ++i) {
+    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
+    m_pod->get_link_processor_node(i).setup(true, false);
+  }
+  m_pod->get_node().getClient().dispatch();
+
+  // pause to ensure pedestals are all captured
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": waiting for pedestal captures";
+  sleep(1);
+
+  // pedestal capture OFF
+  for (uint i_link = 0; i_link < n_links; ++i_link) {
+    for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
+      TLOG_DEBUG(TLVL_INFO) << get_name() << ": disabling pedestal capture for link " << i_link << " stream " << i_stream;
+      m_pod->get_link_processor_node(i_link).capture_pedestal(i_stream, false);
+    }
+  }
+  m_pod->get_node().getClient().dispatch();
+
+  // sleep(5);
+
+  // enable TP output
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling output to DMA (backpressure disabled)";
+  // TOFIX: Switch to enums!
+  m_pod->get_flowmaster_node().set_outflow(1);
+
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_start() method";
+}
+
+
+
+//-----------------------------------------------------------------------------
+void DTPController::do_start_mk1(const data_t& /* args */) {
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_start() method";
 
   // here we will need to setup the FW config
   // ie. number of links, number of pipes etc.
-  int n_links = m_pod->get_n_links();
-  int n_streams = m_pod->get_n_streams();
+  uint n_links = m_pod->get_n_links();
+  uint n_streams = m_pod->get_n_streams();
 
   // reset
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": resetting DTP pod";
@@ -152,7 +324,7 @@ void DTPController::do_start(const data_t& /* args */) {
   } else {
     TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting input to wibulator";
     m_pod->get_flowmaster_node().set_source_wtor();
-    for (int i = 0; i < n_links; ++i) {
+    for (uint i = 0; i < n_links; ++i) {
       auto data = dunedaq::dtpcontrols::read_WIB_pattern_from_file(m_dtp_cfg.pattern);
       m_pod->get_wibulator_node(i).write_pattern(data);
     }
@@ -163,18 +335,18 @@ void DTPController::do_start(const data_t& /* args */) {
   m_pod->get_flowmaster_node().set_sink_hits();
 
   // set threshold
-  for (int i_link = 0; i_link < n_links; ++i_link) {
+  for (uint i_link = 0; i_link < n_links; ++i_link) {
     TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting threshold for link processor " << i_link << " to " << m_dtp_cfg.threshold;
-    for (int i_stream = 0; i_stream < n_streams; ++i_stream) {
+    for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
       m_pod->get_link_processor_node(i_link).set_threshold(i_stream, m_dtp_cfg.threshold);
     }
   }
 
   // set masks
-  int masks_size = 20;  // m_dtp_cfg.masks.size();
+  uint masks_size = 20;  // m_dtp_cfg.masks.size();
   if (masks_size == n_links * n_streams) {
-    for (int i_link = 0; i_link < n_links; i_link++) {
-      for (int i_stream = 0; i_stream < n_streams; i_stream++) {
+    for (uint i_link = 0; i_link < n_links; i_link++) {
+      for (uint i_stream = 0; i_stream < n_streams; i_stream++) {
         int i_mask = (i_link * n_streams) + i_stream;
         uint64_t mask = m_dtp_cfg.masks.at(i_mask);
         TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting masks for link " << i_link << " stream " << i_stream << " to " << std::hex << mask;
@@ -185,8 +357,8 @@ void DTPController::do_start(const data_t& /* args */) {
   m_pod->get_node().getClient().dispatch();
 
   // pedestal capture ON
-  for (int i_link = 0; i_link < n_links; ++i_link) {
-    for (int i_stream = 0; i_stream < n_streams; ++i_stream) {
+  for (uint i_link = 0; i_link < n_links; ++i_link) {
+    for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
       TLOG_DEBUG(TLVL_INFO) << get_name() << ":capturing pedestal for link " << i_link << " stream " << i_stream;
       m_pod->get_link_processor_node(i_link).capture_pedestal(i_stream, true);
     }
@@ -194,7 +366,7 @@ void DTPController::do_start(const data_t& /* args */) {
   m_pod->get_node().getClient().dispatch();
 
   // enable links
-  for (int i = 0; i < n_links; ++i) {
+  for (uint i = 0; i < n_links; ++i) {
     TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
     m_pod->get_link_processor_node(i).setup(true, false);
   }
@@ -205,17 +377,19 @@ void DTPController::do_start(const data_t& /* args */) {
   sleep(1);
 
   // pedestal capture OFF
-  for (int i_link = 0; i_link < n_links; ++i_link) {
-    for (int i_stream = 0; i_stream < n_streams; ++i_stream) {
+  for (uint i_link = 0; i_link < n_links; ++i_link) {
+    for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
       TLOG_DEBUG(TLVL_INFO) << get_name() << ": disabling pedestal capture for link " << i_link << " stream " << i_stream;
       m_pod->get_link_processor_node(i_link).capture_pedestal(i_stream, false);
     }
   }
   m_pod->get_node().getClient().dispatch();
 
+  sleep(5);
+
   // enable TP output
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling output to DMA";
-  m_pod->get_flowmaster_node().set_outflow(true);
+  m_pod->get_flowmaster_node().set_outflow(1);
 
   if (m_dtp_cfg.source == "int") {
     if (m_pod) {
@@ -230,17 +404,30 @@ void DTPController::do_start(const data_t& /* args */) {
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_start() method";
 }
 
+
+//-----------------------------------------------------------------------------
 void DTPController::do_stop(const data_t& /* args */) {
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": Entering do_stop() method";
+
+  int n_links = m_pod->get_n_links();
+
+  // disable links
+  for (uint i = 0; i < n_links; ++i) {
+    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
+    m_pod->get_link_processor_node(i).setup(false, false);
+  }
+  m_pod->get_node().getClient().dispatch();
 
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_stop() method";
 }
 
+
 //-----------------------------------------------------------------------------
-void DTPController::do_scrap(const data_t& args) {
+void DTPController::do_scrap(const data_t& /* args */) {
   // delete the pod controller
   m_pod.reset();
 }
+
 
 //-----------------------------------------------------------------------------
 void DTPController::do_reset(const data_t& /* args */) {
