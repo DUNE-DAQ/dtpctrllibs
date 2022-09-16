@@ -445,7 +445,7 @@ void DTPController::do_reset(const data_t& /* args */) {
 //-----------------------------------------------------------------------------
 void DTPController::get_info(opmonlib::InfoCollector& ci, int /*level*/) {
 
-  auto pkt_ctr = m_pod->get_crif_node().getNode("csr.b3: crif-out.pkt_ctr").read();
+  auto pkt_ctr = m_pod->get_crif_node().getNode("csr.s3_crif-out.pkt_ctr").read();
   m_pod->get_node().getClient().dispatch();
 
   dtpcontrollerinfo::Info module_info;
