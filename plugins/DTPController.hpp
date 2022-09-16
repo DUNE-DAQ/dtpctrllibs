@@ -68,9 +68,6 @@ namespace dunedaq {
     private:
 
       // Commands
-      void do_configure_mk1(const data_t& args);
-      void do_start_mk1(const data_t& args);
-
       void do_configure(const data_t& args);
       void do_start(const data_t& args);
       void do_stop(const data_t& args);
