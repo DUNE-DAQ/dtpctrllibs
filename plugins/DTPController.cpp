@@ -169,6 +169,13 @@ void DTPController::do_configure(const data_t& args) {
   }
   m_pod->get_node().getClient().dispatch();
 
+  // drop empty tps
+  for (uint i = 0; i < n_links; ++i) {
+    TLOG_DEBUG(TLVL_INFO) << get_name() << ": dropping empty tps in pipelines " << i;
+    m_pod->get_link_processor_node(i).drop_empty(true);
+  }
+  m_pod->get_node().getClient().dispatch();
+
   //
   // FIRE WIBULATORS (if required by config)
   //
@@ -197,7 +204,7 @@ void DTPController::do_start(const data_t& /* args */) {
   // disable links
   for (uint i = 0; i < n_links; ++i) {
     TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
-    m_pod->get_link_processor_node(i).setup(false, false);
+    m_pod->get_link_processor_node(i).setup_dr(false);
   }
   m_pod->get_node().getClient().dispatch();
 
@@ -208,12 +215,14 @@ void DTPController::do_start(const data_t& /* args */) {
       m_pod->get_link_processor_node(i_link).capture_pedestal(i_stream, true);
     }
   }
+  // This is unnecessary, capture_pedestal is applied immediately (why?)
   m_pod->get_node().getClient().dispatch();
+
 
   // enable links
   for (uint i = 0; i < n_links; ++i) {
     TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
-    m_pod->get_link_processor_node(i).setup(true, false);
+    m_pod->get_link_processor_node(i).setup_dr(true);
   }
   m_pod->get_node().getClient().dispatch();
 
@@ -228,6 +237,7 @@ void DTPController::do_start(const data_t& /* args */) {
       m_pod->get_link_processor_node(i_link).capture_pedestal(i_stream, false);
     }
   }
+  // This is unnecessary, capture_pedestal is applied immediately (why?)
   m_pod->get_node().getClient().dispatch();
 
   // sleep(5);
@@ -250,7 +260,7 @@ void DTPController::do_stop(const data_t& /* args */) {
   // disable links
   for (uint i = 0; i < n_links; ++i) {
     TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting up link processor " << i;
-    m_pod->get_link_processor_node(i).setup(false, false);
+    m_pod->get_link_processor_node(i).setup_dr(false);
   }
   m_pod->get_node().getClient().dispatch();
 
