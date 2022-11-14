@@ -116,12 +116,12 @@ void DTPController::do_configure(const data_t& args) {
   // CRIF
   //
   // set CRIF to drop empty
-  TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting CRIF to drop empy packets";
-  m_pod->get_crif_node().set_drop_empty();
+  // TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting CRIF to drop empy packets";
+  // m_pod->get_crif_node().set_drop_empty();
 
   // enable CRIF
-  TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling CRIF output";
-  m_pod->get_crif_node().enable();
+  // TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling CRIF output";
+  // m_pod->get_crif_node().enable();
 
 
   //
@@ -291,12 +291,12 @@ void DTPController::do_reset(const data_t& /* args */) {
 //-----------------------------------------------------------------------------
 void DTPController::get_info(opmonlib::InfoCollector& ci, int /*level*/) {
 
-  auto pkt_ctr = m_pod->get_crif_node().getNode("csr.s3_crif-out.pkt_ctr").read();
-  m_pod->get_node().getClient().dispatch();
+  // auto pkt_ctr = m_pod->get_crif_node().getNode("csr.s3_crif-out.pkt_ctr").read();
+  // m_pod->get_node().getClient().dispatch();
 
-  dtpcontrollerinfo::Info module_info;
-  module_info.dummy = pkt_ctr.value();
-  ci.add(module_info);
+  // dtpcontrollerinfo::Info module_info;
+  // module_info.dummy = pkt_ctr.value();
+  // ci.add(module_info);
 
 
 }
