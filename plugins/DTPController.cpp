@@ -116,12 +116,24 @@ void DTPController::do_configure(const data_t& args) {
   // CRIF
   //
   // set CRIF to drop empty
-  TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting CRIF to drop empy packets";
-  m_pod->get_crif_node().set_drop_empty();
+  for (uint i_link = 0; i_link < n_links; ++i_link) {
+    TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting CRIF to drop empy packets for link processor " << i_link;
+    for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
+      m_pod->get_link_processor_node(i_link).get_central_router_node(i_stream).set_drop_empty();
+    }
+  }
+  // TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting CRIF to drop empy packets";
+  // m_pod->get_crif_node().set_drop_empty();
 
   // enable CRIF
-  TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling CRIF output";
-  m_pod->get_crif_node().enable();
+  for (uint i_link = 0; i_link < n_links; ++i_link) {
+    TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling CRIF output for link processor " << i_link;
+    for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
+      m_pod->get_link_processor_node(i_link).get_central_router_node(i_stream).enable();
+    }
+  }
+  // TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling CRIF output";
+  // m_pod->get_crif_node().enable();
 
 
   //
@@ -291,12 +303,23 @@ void DTPController::do_reset(const data_t& /* args */) {
 //-----------------------------------------------------------------------------
 void DTPController::get_info(opmonlib::InfoCollector& ci, int /*level*/) {
 
-  auto pkt_ctr = m_pod->get_crif_node().getNode("csr.s3_crif-out.pkt_ctr").read();
-  m_pod->get_node().getClient().dispatch();
-
+  uint n_links = m_pod->get_n_links();
+  uint n_streams = m_pod->get_n_streams();
   dtpcontrollerinfo::Info module_info;
-  module_info.dummy = pkt_ctr.value();
-  ci.add(module_info);
+
+  for (uint i_link = 0; i_link < n_links; ++i_link) {
+    for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
+      auto pkt_ctr = m_pod->get_link_processor_node(i_link).get_central_router_node(i_stream).getNode("csr.s3_crif-out.pkt_ctr").read();
+      m_pod->get_node().getClient().dispatch();
+      module_info.link_procs[i_link][i_stream].cr_if_packet_counter = pkt_ctr.value();
+      ci.add(module_info);
+    }
+  }
+  // auto pkt_ctr = m_pod->get_crif_node().getNode("csr.s3_crif-out.pkt_ctr").read();
+  // m_pod->get_node().getClient().dispatch();
+
+  // module_info.dummy = pkt_ctr.value();
+  // ci.add(module_info);
 
 
 }
