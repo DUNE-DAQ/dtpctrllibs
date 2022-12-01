@@ -305,14 +305,14 @@ void DTPController::get_info(opmonlib::InfoCollector& ci, int /*level*/) {
 
   uint n_links = m_pod->get_n_links();
   uint n_streams = m_pod->get_n_streams();
-  dtpcontrollerinfo::Info module_info;
 
   for (uint i_link = 0; i_link < n_links; ++i_link) {
     for (uint i_stream = 0; i_stream < n_streams; ++i_stream) {
+      dtpcontrollerinfo::StreamInfo info;
       auto pkt_ctr = m_pod->get_link_processor_node(i_link).get_central_router_node(i_stream).getNode("csr.s3_crif-out.pkt_ctr").read();
       m_pod->get_node().getClient().dispatch();
-      module_info.link_procs[i_link][i_stream].cr_if_packet_counter = pkt_ctr.value();
-      ci.add(module_info);
+      info.cr_if_packet_counter = pkt_ctr.value();
+      ci.add(info);
     }
   }
   // auto pkt_ctr = m_pod->get_crif_node().getNode("csr.s3_crif-out.pkt_ctr").read();
