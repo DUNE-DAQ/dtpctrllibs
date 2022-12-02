@@ -122,8 +122,6 @@ void DTPController::do_configure(const data_t& args) {
       m_pod->get_link_processor_node(i_link).get_central_router_node(i_stream).set_drop_empty();
     }
   }
-  // TLOG_DEBUG(TLVL_INFO) << get_name() << ": setting CRIF to drop empy packets";
-  // m_pod->get_crif_node().set_drop_empty();
 
   // enable CRIF
   for (uint i_link = 0; i_link < n_links; ++i_link) {
@@ -132,9 +130,6 @@ void DTPController::do_configure(const data_t& args) {
       m_pod->get_link_processor_node(i_link).get_central_router_node(i_stream).enable();
     }
   }
-  // TLOG_DEBUG(TLVL_INFO) << get_name() << ": enabling CRIF output";
-  // m_pod->get_crif_node().enable();
-
 
   //
   // DATAFLOW
@@ -315,13 +310,6 @@ void DTPController::get_info(opmonlib::InfoCollector& ci, int /*level*/) {
       ci.add(info);
     }
   }
-  // auto pkt_ctr = m_pod->get_crif_node().getNode("csr.s3_crif-out.pkt_ctr").read();
-  // m_pod->get_node().getClient().dispatch();
-
-  // module_info.dummy = pkt_ctr.value();
-  // ci.add(module_info);
-
-
 }
 
 }  // namespace dtpctrllibs
