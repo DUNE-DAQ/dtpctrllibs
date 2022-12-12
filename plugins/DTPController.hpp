@@ -33,58 +33,57 @@
 #include "opmonlib/InfoCollector.hpp"
 
 #include <memory>
-#include <string>
 #include <regex>
+#include <string>
 
 namespace dunedaq {
-  namespace dtpctrllibs {
+namespace dtpctrllibs {
 
-    inline std::string
-    resolve_environment_variables(std::string text) {
-      static const std::regex env_re{R"--(\$\{([^}]+)\})--"};
-      std::smatch match;
-      while (std::regex_search(text, match, env_re)) {
-        auto const from = match[0];
-        const char* s = getenv(match[1].str().c_str());
-        const std::string env_var(s == nullptr ? "" : s);
-        text.replace(from.first, from.second, env_var);
-      }
-      return text;
-    }
+inline std::string
+resolve_environment_variables(std::string text)
+{
+  static const std::regex env_re{ R"--(\$\{([^}]+)\})--" };
+  std::smatch match;
+  while (std::regex_search(text, match, env_re)) {
+    auto const from = match[0];
+    const char* s = getenv(match[1].str().c_str());
+    const std::string env_var(s == nullptr ? "" : s);
+    text.replace(from.first, from.second, env_var);
+  }
+  return text;
+}
 
-    class DTPController : public dunedaq::appfwk::DAQModule
-    {
-    public:
-      explicit DTPController(const std::string& name);
-      ~DTPController();
+class DTPController : public dunedaq::appfwk::DAQModule
+{
+public:
+  explicit DTPController(const std::string& name);
+  ~DTPController();
 
-      DTPController(const DTPController&) = delete; ///< DTPController is not copy-constructible
-      DTPController& operator=(const DTPController&) = delete; ///< DTPController is not copy-assignable
-      DTPController(DTPController&&) = delete;            ///< DTPController is not move-constructible
-      DTPController& operator=(DTPController&&) = delete; ///< DTPController is not move-assignable
+  DTPController(const DTPController&) = delete;            ///< DTPController is not copy-constructible
+  DTPController& operator=(const DTPController&) = delete; ///< DTPController is not copy-assignable
+  DTPController(DTPController&&) = delete;                 ///< DTPController is not move-constructible
+  DTPController& operator=(DTPController&&) = delete;      ///< DTPController is not move-assignable
 
-      void init(const data_t& init_data) override;
+  void init(const data_t& init_data) override;
 
-    private:
+private:
+  // Commands
+  void do_configure(const data_t& args);
+  void do_start(const data_t& args);
+  void do_stop(const data_t& args);
+  void do_scrap(const data_t& args);
+  void do_reset(const data_t& args);
 
-      // Commands
-      void do_configure(const data_t& args);
-      void do_start(const data_t& args);
-      void do_stop(const data_t& args);
-      void do_scrap(const data_t& args);
-      void do_reset(const data_t& args);
+  void get_info(opmonlib::InfoCollector& ci, int level) override;
 
-      void get_info(opmonlib::InfoCollector& ci, int level) override;
+  // connections to the hardware
+  std::unique_ptr<dtpcontrols::DTPPodController> m_pod;
 
-      // connections to the hardware
-      std::unique_ptr<dtpcontrols::DTPPodController> m_pod;
+  // config data
+  dtpcontroller::Conf m_dtp_cfg;
+};
 
-      // config data
-      dtpcontroller::Conf m_dtp_cfg;
-
-    };
-
-  } // namespace dtpctrllibs
+} // namespace dtpctrllibs
 } // namespace dunedaq
 
 #endif // DTPCTRLLIBS_PLUGINS_DTPCONTROLLER_HPP_
