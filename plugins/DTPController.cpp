@@ -271,6 +271,9 @@ void DTPController::do_stop(const data_t& /* args */) {
   }
   m_pod->get_node().getClient().dispatch();
 
+  TLOG_DEBUG(TLVL_INFO) << get_name() << ": resetting DTP pod";
+  m_pod->reset();
+
   TLOG_DEBUG(TLVL_INFO) << get_name() << ": Exiting do_stop() method";
 }
 
